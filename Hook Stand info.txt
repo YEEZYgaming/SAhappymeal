@@ -1,0 +1,59 @@
+local player = game.Players.LocalPlayer
+local data = player:WaitForChild("Data")
+local standValue = data:WaitForChild("Stand")
+
+print("Current Stand Number:", standValue.Value)
+
+local output = "Current Stand Number: " .. tostring(standValue.Value) .. "\n"
+local meshesParts = {}
+
+local function printStandParts()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local stand = character:WaitForChild("Stand", 5)
+
+    if not stand then
+        warn("Stand not found in character.")
+        return
+    end
+
+    print("===== Stand Parts =====")
+    output = output .. "===== Stand Parts =====\n"
+
+    -- We'll collect non-Meshes and Meshes parts separately
+    local nonMeshesParts = {}
+
+    for _, part in ipairs(stand:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local parentName = part.Parent and part.Parent.Name or ""
+            local fullName = part:GetFullName()
+
+            if parentName == "Meshes" then
+                -- Only print the part's name inside Meshes folder (without full path)
+                table.insert(meshesParts, part.Name)
+            else
+                table.insert(nonMeshesParts, fullName)
+            end
+        end
+    end
+
+    -- Print non-Meshes parts
+    for _, name in ipairs(nonMeshesParts) do
+        print(name)
+        output = output .. name .. "\n"
+    end
+
+    -- Print Meshes parts grouped and indented
+    if #meshesParts > 0 then
+        print("Meshes:")
+        output = output .. "Meshes:\n"
+        for _, meshName in ipairs(meshesParts) do
+            print("    " .. meshName)
+            output = output .. "    " .. meshName .. "\n"
+        end
+    end
+end
+
+printStandParts()
+
+-- Write the output to a file after printing
+writefile("StandPartsOutput.txt", output)
