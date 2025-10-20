@@ -1,0 +1,28 @@
+-- Command Bar script (run in Studio Play / Play Solo)
+
+local stand = workspace:FindFirstChild("Stand") or (workspace:FindFirstChild("failssss") and workspace.failssss:FindFirstChild("Stand"))
+if not stand then
+    warn("Stand not found in Workspace.")
+    return
+end
+
+-- Create a folder in Workspace to store saved clones if it doesn't exist
+local savedFolder = workspace:FindFirstChild("SavedStands")
+if not savedFolder then
+    savedFolder = Instance.new("Folder")
+    savedFolder.Name = "SavedStands"
+    savedFolder.Parent = workspace
+end
+
+local clone = stand:Clone()
+clone.Name = "SavedStand_" .. tostring(os.time())
+clone.Parent = savedFolder
+
+-- Optional: remove scripts to prevent runtime behavior when you export
+for _, descendant in ipairs(clone:GetDescendants()) do
+    if descendant:IsA("Script") or descendant:IsA("LocalScript") or descendant:IsA("ModuleScript") then
+        descendant:Destroy()
+    end
+end
+
+print("Cloned Stand to Workspace.SavedStands as:", clone.Name)
