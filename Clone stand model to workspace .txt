@@ -1,6 +1,6 @@
 -- Command Bar script (run in Studio Play / Play Solo)
 
-local stand = workspace:FindFirstChild("Stand") or (workspace:FindFirstChild("failssss") and workspace.failssss:FindFirstChild("Stand"))
+local stand = workspace:FindFirstChild("Stand") or (workspace:FindFirstChild("Your Username") and workspace.Your Username:FindFirstChild("Stand"))
 if not stand then
     warn("Stand not found in Workspace.")
     return
@@ -26,3 +26,4 @@ for _, descendant in ipairs(clone:GetDescendants()) do
 end
 
 print("Cloned Stand to Workspace.SavedStands as:", clone.Name)
+
