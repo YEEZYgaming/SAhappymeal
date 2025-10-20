@@ -1,0 +1,61 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local plr = Players.LocalPlayer
+local trailRemote = ReplicatedStorage:WaitForChild("Trail")
+local tran = ReplicatedStorage:WaitForChild("Main"):WaitForChild("Transparency")
+
+-- Parts we want to make transparent
+local parts = {
+    "HeadHelmet","headtube","headskin","LeftArmPart","LeftLegPart","RightArmPart","RightLegPart",
+    "TorsoAbs","TorsoAbs2","TorsoAbs3","TorsoCapsules","TorsoPart","TorsoBelt","headskin","headtube","TorsoStraps","TorsoBelt","Stand Right Leg","Stand Left Leg","Stand Right Arm","Stand Left Arm","Stand Torso","RightArmPArt","RightLegCircle","Skin"
+    
+}
+
+local function setupCharacter(char)
+    if not char then return end
+
+    local data = plr:WaitForChild("Data")
+    local standValue = data:WaitForChild("Stand")
+
+    -- Only continue if Stand value is 655 or 63
+    if standValue.Value ~= 655 and standValue.Value ~= 63 then return end
+
+    local stand = char:WaitForChild("Stand")
+    local hum = char:WaitForChild("Humanoid", 5)
+    if not hum then return end
+
+    task.spawn(function()
+        while char.Parent do
+            task.wait(0.1)
+            for _, obj in ipairs(stand:GetChildren()) do
+
+                -- Handle transparency for specific named parts
+                for _, name in ipairs(parts) do
+                    if obj.Name == name and obj:IsA("BasePart") then
+                        tran:FireServer(obj, 1)
+                    end
+                end
+
+                -- 🔧 Disable all weld types
+                if obj:IsA("WeldConstraint") then
+                    obj.Enabled = false
+
+                elseif obj:IsA("Weld") or obj:IsA("Motor6D") then
+                    -- Store original connections if needed for re-enabling
+                    obj.Part0 = nil
+                    obj.Part1 = nil
+                end
+            end
+        end
+    end)
+end
+
+-- Initial setup
+if plr.Character then
+    setupCharacter(plr.Character)
+end
+
+-- Handle character respawn
+plr.CharacterAdded:Connect(setupCharacter)
