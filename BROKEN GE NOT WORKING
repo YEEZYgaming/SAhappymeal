@@ -6,14 +6,9 @@ local plr = Players.LocalPlayer
 local trailRemote = ReplicatedStorage:WaitForChild("Trail")
 local tran = ReplicatedStorage:WaitForChild("Main"):WaitForChild("Transparency")
 
--- Parts to make invisible
-local invisibleParts = {
-    "Meshes/14","Meshes/7","Mesh","Meshes/3","Meshes/32","Meshes/33","Meshes/34","Meshes39","Meshes/37","Meshes/38","Meshes/39","Meshes/42","Meshes/52","Meshes/55","Meshes/56","FakeRightLeg","FakeLeftLeg","Meshes/24","Meshes/23","Meshes/28","Meshes/29","FakeHead"
-}
-
--- Parts to make visible
-local visibleParts = {
-    "nul",
+-- Parts we want to make transparent
+local parts = {
+    "Mesh","Meshes/0","Meshes/1","Meshes/10","Meshes/11","Meshes/12","Meshes/14","Meshes/16","Meshes/17","Meshes/18","Meshes/19","Meshes/22","Meshes/23","Meshes/24","Meshes/25","Meshes/26","Meshes/27","Meshes/28","Meshes/29","Meshes/3","Meshes/30","Meshes/31","Meshes/32","Meshes/33","Meshes/34","Meshes/35","Meshes/36","Meshes/37","Meshes/38","Meshes/39","Meshes/4","Meshes/40","Meshes/42","Meshes/43","Meshes/51","Meshes/53","Meshes/54","Meshes/55","Meshes/56","Meshes/57","Meshes/58","Meshes/59","Meshes/6","Meshes/60","Meshes/61","Meshes/62","Meshes/63","Meshes/7","Meshes/8","Meshes/9","Meshes/52"
 }
 
 local function setupCharacter(char)
@@ -22,7 +17,7 @@ local function setupCharacter(char)
     local data = plr:WaitForChild("Data")
     local standValue = data:WaitForChild("Stand")
 
-    -- Only continue if Stand value is 42 or 63
+    -- Only continue if Stand value is 655 or 63
     if standValue.Value ~= 7 and standValue.Value ~= 63 then return end
 
     local stand = char:WaitForChild("Stand")
@@ -33,33 +28,22 @@ local function setupCharacter(char)
         while char.Parent do
             task.wait(0.1)
             for _, obj in ipairs(stand:GetChildren()) do
-                -- Make specific parts invisible
-                for _, name in ipairs(invisibleParts) do
+
+                -- Handle transparency for specific named parts
+                for _, name in ipairs(parts) do
                     if obj.Name == name and obj:IsA("BasePart") then
                         tran:FireServer(obj, 1)
                     end
                 end
 
-                -- Disable welds
+                -- 🔧 Disable all weld types
                 if obj:IsA("WeldConstraint") then
                     obj.Enabled = false
+
                 elseif obj:IsA("Weld") or obj:IsA("Motor6D") then
+                    -- Store original connections if needed for re-enabling
                     obj.Part0 = nil
                     obj.Part1 = nil
-                end
-            end
-        end
-    end)
-
-    task.spawn(function()
-        while char.Parent do
-            task.wait(0.1)
-            for _, obj in ipairs(stand:GetChildren()) do
-                -- Make specific parts visible
-                for _, name in ipairs(visibleParts) do
-                    if obj.Name == name and obj:IsA("BasePart") then
-                        tran:FireServer(obj, 0)
-                    end
                 end
             end
         end
