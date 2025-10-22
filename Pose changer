@@ -1,0 +1,141 @@
+--// Services
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
+--// Player setup
+local plr = Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+
+--// Variables
+local currentPlaying = nil
+local customAnimationId = nil
+local currentTrack = nil
+local isPlaying = false
+
+-------------------------------------------------------
+--// Function to attach humanoid again after respawn
+-------------------------------------------------------
+local function attachHumanoid(newChar)
+	char = newChar
+	hum = char:WaitForChild("Humanoid")
+
+	hum.AnimationPlayed:Connect(function(track)
+		local anim = track.Animation
+		if anim and anim.AnimationId then
+			print("[Detected Animation]:", anim.AnimationId)
+			currentPlaying = anim.AnimationId
+		end
+	end)
+end
+
+hum.AnimationPlayed:Connect(function(track)
+	local anim = track.Animation
+	if anim and anim.AnimationId then
+		print("[Detected Animation]:", anim.AnimationId)
+		currentPlaying = anim.AnimationId
+	end
+end)
+
+-------------------------------------------------------
+--// Function to play/stop animation
+-------------------------------------------------------
+local function playCustomAnimation(id)
+	if not id then
+		warn("No animation ID set.")
+		return
+	end
+
+	if currentTrack and currentTrack.IsPlaying then
+		currentTrack:Stop()
+	end
+
+	local anim = Instance.new("Animation")
+	anim.AnimationId = "rbxassetid://" .. tostring(id)
+	currentTrack = hum:LoadAnimation(anim)
+	currentTrack.Priority = Enum.AnimationPriority.Action
+	currentTrack:Play()
+	isPlaying = true
+	print("[▶ Playing animation]:", anim.AnimationId)
+end
+
+local function stopCustomAnimation()
+	if currentTrack and currentTrack.IsPlaying then
+		currentTrack:Stop()
+		isPlaying = false
+		print("[⏹ Stopped animation]")
+	end
+end
+
+-------------------------------------------------------
+--// GUI for manual rbxassetid input
+-------------------------------------------------------
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AnimationInputGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = plr:WaitForChild("PlayerGui")
+
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(0, 300, 0, 50)
+textBox.Position = UDim2.new(0.5, -150, 0.9, -25)
+textBox.PlaceholderText = "Enter rbxassetid here"
+textBox.Text = ""
+textBox.ClearTextOnFocus = false
+textBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+textBox.TextColor3 = Color3.new(1,1,1)
+textBox.Font = Enum.Font.SourceSansBold
+textBox.TextScaled = true
+textBox.Parent = screenGui
+
+-- Update animation ID when player presses Enter
+textBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		local inputId = textBox.Text:gsub("%D","") -- remove non-numeric characters
+		if inputId ~= "" then
+			customAnimationId = inputId
+			print("[Manual animation ID set]:", customAnimationId)
+		else
+			warn("Invalid input. Enter numeric rbxassetid only.")
+		end
+	end
+end)
+
+-------------------------------------------------------
+--// Keybind handling
+-------------------------------------------------------
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+
+	-- Toggle animation with L
+	if input.KeyCode == Enum.KeyCode.L then
+		if not customAnimationId then
+			warn("No animation ID set! Use GUI or press 'K' to copy current animation.")
+			return
+		end
+
+		if isPlaying then
+			stopCustomAnimation()
+		else
+			playCustomAnimation(customAnimationId)
+		end
+	end
+
+	-- Press K to save currently detected animation
+	if input.KeyCode == Enum.KeyCode.K then
+		if currentPlaying then
+			customAnimationId = currentPlaying:gsub("rbxassetid://", "")
+			print("[Custom animation ID updated to]:", customAnimationId)
+		else
+			warn("No animation currently playing to set.")
+		end
+	end
+end)
+
+-------------------------------------------------------
+--// Handle respawn
+-------------------------------------------------------
+plr.CharacterAdded:Connect(function(newChar)
+	attachHumanoid(newChar)
+	print("[Character respawned — animation kept]:", customAnimationId or "none")
+end)
