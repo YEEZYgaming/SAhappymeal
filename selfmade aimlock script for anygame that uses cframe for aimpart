@@ -1,0 +1,240 @@
+local Area = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local MyCharacter = LocalPlayer.Character
+local MyRoot = MyCharacter:FindFirstChild("HumanoidRootPart")
+local MyHumanoid = MyCharacter:FindFirstChild("Humanoid")
+local Mouse = LocalPlayer:GetMouse()
+local MyView = Area.CurrentCamera
+local HoldingM2 = false
+local Active = false
+local Lock = false
+local Epitaph = 0 -- Start prediction at 0
+local HeadOffset = Vector3.new(0, .1, 0)
+local AimLockEnabled = true -- New toggle state
+
+_G.TeamCheck = false
+_G.AimPart = "Head"
+_G.Sensitivity = 0
+_G.CircleSides = 64
+_G.CircleColor = Color3.fromRGB(255, 0, 130)
+_G.CircleTransparency = 0
+_G.CircleRadius = 200
+_G.CircleFilled = false
+_G.CircleVisible = true
+_G.CircleThickness = 1
+
+-- INTRO SCREEN
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local introGui = Instance.new("ScreenGui")
+introGui.Name = "IntroScreen"
+introGui.ResetOnSpawn = false
+introGui.IgnoreGuiInset = true
+introGui.Parent = playerGui
+
+local background = Instance.new("ImageLabel")
+background.Size = UDim2.new(1, 0, 1, 0)
+background.Position = UDim2.new(0, 0, 0, 0)
+background.BackgroundTransparency = 1
+background.Image = "rbxassetid://80300198810212"
+background.Parent = introGui
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 1, 0)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "GET BEAMED NIGGA LOLLLLLL"
+titleLabel.TextColor3 = Color3.new(1, 0, 0)
+titleLabel.Font = Enum.Font.GothamBlack
+titleLabel.TextScaled = true
+titleLabel.Parent = introGui
+
+task.delay(4, function()
+	introGui:Destroy()
+end)
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Position = Vector2.new(MyView.ViewportSize.X / 2, MyView.ViewportSize.Y / 2)
+FOVCircle.Radius = _G.CircleRadius
+FOVCircle.Filled = _G.CircleFilled
+FOVCircle.Color = _G.CircleColor
+FOVCircle.Visible = _G.CircleVisible
+FOVCircle.Transparency = _G.CircleTransparency
+FOVCircle.NumSides = _G.CircleSides
+FOVCircle.Thickness = _G.CircleThickness
+
+local function CursorLock()
+	UIS.MouseBehavior = Enum.MouseBehavior.LockCenter
+end
+local function UnLockCursor()
+	HoldingM2 = false Active = false Lock = false 
+	UIS.MouseBehavior = Enum.MouseBehavior.Default
+end
+
+function FindNearestPlayer()
+	local dist = math.huge
+	local Target = nil
+	for _, v in pairs(Players:GetPlayers()) do
+		if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 and v.Character:FindFirstChild(_G.AimPart) then
+			local TheirCharacter = v.Character
+			local CharacterRoot, Visible = MyView:WorldToViewportPoint(TheirCharacter[_G.AimPart].Position)
+			if Visible then
+				local RealMag = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(CharacterRoot.X, CharacterRoot.Y)).Magnitude
+				if RealMag < dist and RealMag < FOVCircle.Radius then
+					dist = RealMag
+					Target = TheirCharacter
+				end
+			end
+		end
+	end
+	return Target
+end
+
+UIS.InputBegan:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+		HoldingM2 = true
+		Active = true
+		Lock = true
+		if Active then
+        	local The_Enemy = FindNearestPlayer()
+			while HoldingM2 do task.wait(.000001)
+				if Lock and AimLockEnabled and The_Enemy ~= nil then
+					local targetPart = The_Enemy:FindFirstChild(_G.AimPart)
+					if targetPart then
+						local Future = targetPart.CFrame + (The_Enemy.HumanoidRootPart.Velocity * Epitaph + HeadOffset)
+						MyView.CFrame = CFrame.lookAt(MyView.CFrame.Position, Future.Position)
+						CursorLock()
+					end
+				end
+			end
+		end
+	end
+end)
+
+UIS.InputEnded:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton2 then
+		UnLockCursor()
+	end
+end)
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "EpitaphSliderGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local sliderFrame = Instance.new("Frame")
+sliderFrame.Size = UDim2.new(0, 200, 0, 120)
+sliderFrame.Position = UDim2.new(1, -220, 0.4, 0)
+sliderFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+sliderFrame.BorderSizePixel = 0
+sliderFrame.Parent = screenGui
+
+-- Slider background
+local sliderBar = Instance.new("Frame")
+sliderBar.Size = UDim2.new(0.9, 0, 0, 4)
+sliderBar.Position = UDim2.new(0.05, 0, 0.2, -2)
+sliderBar.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+sliderBar.BorderSizePixel = 0
+sliderBar.Parent = sliderFrame
+
+-- Draggable knob
+local knob = Instance.new("TextButton")
+knob.Size = UDim2.new(0, 10, 0, 20)
+knob.Position = UDim2.new(0.5, -5, 0.2, -10)
+knob.BackgroundColor3 = Color3.fromRGB(255, 0, 130)
+knob.BorderSizePixel = 0
+knob.Text = ""
+knob.AutoButtonColor = false
+knob.Parent = sliderFrame
+
+-- Label
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 0.2, 0)
+label.Position = UDim2.new(0, 0, 0, 0)
+label.BackgroundTransparency = 1
+label.TextColor3 = Color3.new(1, 1, 1)
+label.Text = "Prediction (Epitaph): " .. tostring(Epitaph)
+label.Font = Enum.Font.SourceSans
+label.TextSize = 16
+label.Parent = sliderFrame
+
+-- Toggle AimLock button
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0.9, 0, 0.2, 0)
+toggleButton.Position = UDim2.new(0.05, 0, 0.4, 0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+toggleButton.BorderSizePixel = 0
+toggleButton.Text = "AimLock: ON"
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 18
+toggleButton.Parent = sliderFrame
+
+toggleButton.MouseButton1Click:Connect(function()
+	AimLockEnabled = not AimLockEnabled
+	if AimLockEnabled then
+		toggleButton.Text = "AimLock: ON"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	else
+		toggleButton.Text = "AimLock: OFF"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	end
+end)
+
+-- Aim Part toggle button (Head / HumanoidRootPart)
+local aimPartButton = Instance.new("TextButton")
+aimPartButton.Size = UDim2.new(0.9, 0, 0.2, 0)
+aimPartButton.Position = UDim2.new(0.05, 0, 0.6, 0)
+aimPartButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+aimPartButton.BorderSizePixel = 0
+aimPartButton.Text = "Aim Part: " .. _G.AimPart
+aimPartButton.TextColor3 = Color3.new(1,1,1)
+aimPartButton.Font = Enum.Font.SourceSansBold
+aimPartButton.TextSize = 16
+aimPartButton.Parent = sliderFrame
+
+aimPartButton.MouseButton1Click:Connect(function()
+	if _G.AimPart == "Head" then
+		_G.AimPart = "HumanoidRootPart"
+	else
+		_G.AimPart = "Head"
+	end
+	aimPartButton.Text = "Aim Part: " .. _G.AimPart
+end)
+
+-- Make knob draggable
+local dragging = false
+local uis = game:GetService("UserInputService")
+
+knob.MouseButton1Down:Connect(function()
+	dragging = true
+end)
+
+uis.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+	if dragging then
+		local mouseX = uis:GetMouseLocation().X
+		local absPos = sliderBar.AbsolutePosition.X
+		local absSize = sliderBar.AbsoluteSize.X
+
+		local relX = math.clamp(mouseX - absPos, 0, absSize)
+		local percent = relX / absSize
+
+		-- Move knob
+		knob.Position = UDim2.new(percent, -5, 0.2, -10)
+
+		-- Update Epitaph live
+		Epitaph = math.floor((percent * 1000)) / 1000
+		label.Text = "Prediction (Epitaph): " .. tostring(Epitaph)
+	end
+end)
